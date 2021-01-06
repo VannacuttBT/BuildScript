@@ -6,7 +6,8 @@
 #
 LVersionMajor=1
 LVersionMinor=0
-LVersionPatch=11
+# Autoinc with x
+LVersionRevision=x
 #
 #######################################################
 
@@ -17,8 +18,6 @@ LScriptFile=$(readlink -f -- "${BASH_SOURCE[@]}")
 #LSciptFilename=$(basename -- "$(readlink -f -- "${BASH_SOURCE[@]}")")
 
 LDate="$(date "+%Y-%m-%d %T")"
-LVersionLabel="${LVersionMajor}.${LVersionMinor}.${LVersionPatch}"
-LCommitText="New Release ${LVersionLabel} Date ${LDate}"
 LDevBranch=master
 LReleaseBranch=build
 
@@ -28,15 +27,37 @@ cd "${LWorkDir}" || exit
 # file in which to update version number
 LVersionFile="${LWorkDir}/version.txt"
 
-# find version number assignment ("= v1.5.5" for example)
-# and replace it with newly specified version number
+# Create version text file
 if [ ! -f "${LVersionFile}" ]; then
-    echo "${LVersionLabel}" > "${LVersionFile}"
-fi
-sed -i.backup -E "s/\= [0-9.]+/\= ${LVersionLabel}/" "${LVersionFile}" "${LVersionFile}"
+    # File does not exists
+    echo "1.0.0" > "${LVersionFile}"
 
-# remove backup file created by sed command
-rm "${LVersionFile}.backup"
+    if [[ ${LVersionRevision} == "x" ]]; then
+        LVersionRevision=0
+    fi
+fi
+
+# Read and Autoinc if needed
+if [[ ${LVersionRevision} == "x" ]]; then
+    # Do Auto inc
+    LVersionOld=$(<"${LVersionFile}")
+    # LVersionMajor=$(echo "${LVersionOld}" | cut -d. -f1)
+    # LVersionMinor=$(echo "${LVersionOld}" | cut -d. -f2)
+    LVersionRevision=$(echo "${LVersionOld}" | cut -d. -f3)
+    LNewVersionRevision=$(("${LVersionRevision}" + 1))
+else
+    # No Auto Inc
+    LNewVersionRevision="${LVersionRevision}"
+fi
+
+# Build new version
+LVersionLabel="${LVersionMajor}.${LVersionMinor}.${LNewVersionRevision}"
+
+# Write new Version to file
+echo "${LVersionLabel}" > "${LVersionFile}"
+
+# Build commit text
+LCommitText="New Release ${LVersionLabel} Date ${LDate}"
 
 # Check if branch exists
 if [ -z "$(git branch --list ${LReleaseBranch})" ]; then
