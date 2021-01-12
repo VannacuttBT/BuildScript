@@ -2,7 +2,7 @@
 
 #######################################################
 #
-# Change Version here
+# Change Version here.
 #
 LVersionMajor=1
 LVersionMinor=0
